@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 
 class MyAccountManager(BaseUserManager):
-    def create_user(self,first_name,last_name,username,email,password=None):
+    def create_user(self,first_name,last_name,username,email,phone_number,password=None):
         if not email:
             raise ValueError('user must have and email address')
         if not username:
@@ -13,7 +13,7 @@ class MyAccountManager(BaseUserManager):
             username = username,
             first_name = first_name,
             last_name = last_name,
-
+            phone_number = phone_number,
         )
 
 
@@ -46,6 +46,7 @@ class Account(AbstractBaseUser):
     last_name=models.CharField(max_length=50)
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=100, unique=True)
+    phone_number = models.CharField(max_length=50)
 
     #required
     date_joined = models.DateTimeField(auto_now_add=True)
