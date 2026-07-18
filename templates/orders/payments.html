@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% load static %}
+
+
+<section class="section-content padding-y bg">
+<div class="container">
+
+<!-- ============================ COMPONENT 1 ================================= -->
+        <h4 class="text-center mb-10">Review Your Order and Make Payment</h4>
+
+<div class="row">
+	<aside class="col-lg-8">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-heade">Billing Address</h5>
+        </div>
+        <div class="card-body">
+            <p class="card-text mb-0">{{order.full_name}}</p>
+            <p class="card-text mb-0">{{order.full_address}}</p>
+            <p class="card-text mb-0">{{order.city}}, {{order.state}}</p>
+            <p class="card-text mb-0">{{order.country}}</p>
+            {% if order.order_note %}
+            <b>Order Note:</b><p class="card-text mb-0">{{order.order_note}}</p>
+            {% else %}
+            {% endif %}
+        </div>
+    </div>
+     <div class="card">
+        <div class="card-header">
+            <h5 class="card-heade">Payment Method</h5>
+        </div>
+        <div class="card-body">
+            <p class="card-text">Razorpay</p>
+        </div>
+    </div>
+     <div class="card">
+        <div class="card-header">
+            <h5 class="card-heade">Review Products</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-borderless">
+    <thead class="text-muted">
+        <tr class="small text-uppercase">
+            <th>Product</th>
+            <th width="70">Qty</th>
+            <th width="120">Price</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for cart_item in cart_items %}
+
+    <tr>
+
+        <!-- Product -->
+        <td>
+            <figure class="itemside">
+
+                <div class="aside">
+                    <img src="{{ cart_item.product.image.url }}" class="img-sm">
+                </div>
+
+                <figcaption class="info">
+                    <a href="{{ cart_item.product.get_url }}" class="title text-dark">
+                        {{ cart_item.product.product_name }}
+                    </a>
+
+                    <p class="text-muted small">
+                        {% for item in cart_item.variation.all %}
+                            {{ item.variation_category|capfirst }} :
+                            {{ item.variation_value|capfirst }} <br>
+                        {% endfor %}
+                    </p>
+
+                </figcaption>
+
+            </figure>
+        </td>
+
+        <!-- Quantity -->
+        <td>
+            {{ cart_item.quantity }}
+        </td>
+
+        <!-- Price -->
+        <td>
+            <strong>₹{{ cart_item.sub_total }}</strong><br>
+            <small class="text-muted">₹{{ cart_item.product.price }} each</small>
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+        </div>
+    </div>
+
+
+	</aside> <!-- col.// -->
+	<aside class="col-lg-4">
+
+		<div class="card">
+		<div class="card-body">
+			<dl class="dlist-align">
+			  <dt>Total price:</dt>
+			  <dd class="text-right">₹{{ total }}</dd>
+			</dl>
+			<dl class="dlist-align">
+			  <dt>Tax:</dt>
+			  <dd class="text-right"> ₹{{ tax }}</dd>
+			</dl>
+			<dl class="dlist-align">
+			  <dt>Total:</dt>
+			  <dd class="text-right text-dark b"><strong>₹{{ grand_total }}</strong></dd>
+			</dl>
+			<hr>
+			<p class="text-center mb-3">
+				<img src="{% static './images/misc/payments.png' %}" height="26">
+			</p>
+			<button  id="rzp-button" class="btn btn-primary btn-block"> Make Payment </button>
+			
+		</div> <!-- card-body.// -->
+		</div> <!-- card.// -->
+
+</aside> <!-- col.// -->
+
+</div> <!-- row.// -->
+<!-- ============================ COMPONENT 1 END .// ================================= -->
+
+</div> <!-- container .//  -->
+</section>
+<!-- ========================= SECTION CONTENT END// ========================= -->
+ <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    var options = {
+        "key": "{{ razorpay_key_id }}",
+        "amount": "{{ razorpay_amount }}",
+        "currency": "INR",
+        "name": "GreatKart",
+        "description": "Order Payment",
+        "order_id": "{{ razorpay_order_id }}",
+
+        "handler": function (response) {
+
+    var form = document.createElement("form");
+    form.method = "POST";
+    form.action = "{% url 'payment_success' %}";
+
+    var csrfToken = document.createElement("input");
+    csrfToken.type = "hidden";
+    csrfToken.name = "csrfmiddlewaretoken";
+    csrfToken.value = "{{ csrf_token }}";
+    form.appendChild(csrfToken);
+
+    var paymentId = document.createElement("input");
+    paymentId.type = "hidden";
+    paymentId.name = "razorpay_payment_id";
+    paymentId.value = response.razorpay_payment_id;
+    form.appendChild(paymentId);
+
+    var razorpayOrderId = document.createElement("input");
+    razorpayOrderId.type = "hidden";
+    razorpayOrderId.name = "razorpay_order_id";
+    razorpayOrderId.value = response.razorpay_order_id;
+    form.appendChild(razorpayOrderId);
+
+    var signature = document.createElement("input");
+    signature.type = "hidden";
+    signature.name = "razorpay_signature";
+    signature.value = response.razorpay_signature;
+    form.appendChild(signature);
+
+    var orderNumber = document.createElement("input");
+    orderNumber.type = "hidden";
+    orderNumber.name = "order_number";
+    orderNumber.value = "{{ order.order_number }}";
+    form.appendChild(orderNumber);
+
+    document.body.appendChild(form);
+    form.submit();
+},
+
+        "prefill": {
+            "name": "{{ order.full_name }}",
+            "email": "{{ order.email }}",
+            "contact": "{{ order.phone }}"
+        },
+
+        "theme": {
+            "color": "#3399cc"
+        }
+    };
+
+    var rzp = new Razorpay(options);
+
+    document.getElementById('rzp-button').onclick = function(e) {
+
+        rzp.open();
+
+        e.preventDefault();
+    };
+    var rzp = new Razorpay(options);
+
+rzp.on('payment.failed', function (response) {
+    console.log("Payment failed:", response.error);
+
+    alert(
+        "Payment Failed\n" +
+        "Code: " + response.error.code + "\n" +
+        "Description: " + response.error.description
+    );
+});
+
+document.getElementById('rzp-button').onclick = function(e) {
+    rzp.open();
+    e.preventDefault();
+};
+</script>
+
+{% endblock %}
