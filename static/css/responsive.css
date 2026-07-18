@@ -82,3 +82,10 @@
 }
 
 /*# sourceMappingURL=responsive.css.map */
+
+
+.rate .half:before{
+  content: "\f089";
+  position: absolute;
+  padding-right: 0;
+}
